@@ -23,7 +23,6 @@ beforeEach((done)=>{
 });
 //Mocha
 describe("POST /todos", function(){
-    //Mocha
     it("should create a new todo", function(done){
         var text = 'text todo text';
         //Send automatically parses as a JSON object
@@ -49,13 +48,14 @@ describe("POST /todos", function(){
                     expect(todos.length).toBe(1);
                     expect(todos[0].text).toBe(text);
                     done();
-                }).catch(function(e){
-                    done(e)});
+                }).catch(function(e){ 
+                    done(e)
+                });
             });
         
     });
 
-    it("should not create todo with invalid body data", function(done){
+    it("should not create todo with invalid body data", (done)=>{
         request(app)
             .post("/todos")
             .send({})
@@ -172,34 +172,5 @@ describe("PATCH /todos/:id", function(){
             })
             .end(done);
     });
-    it("Should c;ear completedAt when todo is not completed", function(done){
-        var text = "test patch todos/id";
-        request(app)
-            .patch("/todos/" + todos[1]._id)
-            .send({
-                completed: false,
-                text: text
-            })
-            .expect(200)
-            .expect(function(res){
-                expect(res.body.todo.text).toBe(text)
-                expect(res.body.todo.completed).toBe(false)
-                expect(res.body.todo.completedAt).toNotExist()
-            })
-            .end(done);
-    });
-    it("Should return a 404 if ObjectID is invalid", function(done){
-        var id = 12345;
-        request(app)
-            .patch("/todos/" + id)
-            .expect(404)
-            .end(done);
-    });
-    it("Should return 404 if todo not found", function(done){
-            var id = new ObjectId().toHexString;
-            request(app)
-                .patch("/todos/" + id)
-                .expect(404)
-                .end(done);
-    });
+
 });
