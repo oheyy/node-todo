@@ -157,7 +157,7 @@ describe("DELETE /todos/id", function() {
 
 describe("PATCH /todos/:id", function(){
     it("Should update the selected todo", function(done){
-        var text = "test patch todos/id";
+        var text = "test patch todos";
         request(app)
             .patch("/todos/" + todos[0]._id)
             .send({
@@ -171,6 +171,22 @@ describe("PATCH /todos/:id", function(){
                 expect(res.body.todo.completedAt).toBeA("number")
             })
             .end(done);
+    });
+    it("Should clear the CompleteAt when todo is not completed", function(done){
+    var text = "test patch todos/id";
+    request(app)
+        .patch("/todos/" + todos[1]._id)
+        .send({
+            completed: false,
+            text: text
+        })
+        .expect(200)
+        .expect(function(res){
+            expect(res.body.todo.text).toBe(text)
+            expect(res.body.todo.completed).toBe(false)
+            expect(res.body.todo.completedAt).toNotExist()
+        })
+        .end(done);
     });
 
 });
