@@ -1,18 +1,22 @@
 var express = require("express");
 var bodyParser = require("body-parser");
-
+var methodOverride = require("method-override");
+var _ = require("lodash");
+//Property of mongodb.ObjectID therefore ObjectID has to be the same  
+var {ObjectID} = require("mongodb");
 var {mongoose} = require("./db/mongoose");
 var {Todo} = require("./Models/todo");
 var {user} = require("./Models/user");
 
 
 var app = express();
+const port = process.env.PORT||3000;
+
 app.use(bodyParser.json());
+// e.g. /todos?_method="DELETE"
+app.use(methodOverride("_method"));
 
 // app.get("/")
-
-// app.get("/todo")
-
 app.post("/todos", function(req, res){
     var todo = new Todo ({
         text: req.body.text
@@ -25,7 +29,77 @@ app.post("/todos", function(req, res){
     });
 });
 
-app.listen(3000, () => {
-    console.log("Server Connected");
+// DELETE /todos/id?_method=DELETE
+app.delete("/todos/:id", function(req, res){
+    var id = req.params.id;
+    if(!ObjectID.isValid(id)){
+        return res.status(404).send("Invalid id!!");
+    }
+    Todo.findByIdAndRemove(id).then(function(deletedTodo){
+        if(deletedTodo == null){
+            return res.status(404).send();
+        }
+        res.status(200).send({deletedTodo});
+    }, function(e){
+        res.status(400).send();
+    });
 });
 
+//Patch /todos/id patch vs put (Put requires the entity to be complete but patch does not)
+app.patch("/todos/:id", function(req, res){
+    var id = req.params.id;
+    var body = _.pick(req.body, ['text', 'completed']);
+    if(!ObjectID.isValid(id)){
+        return res.status(404).send();
+    }
+
+    if(_.isBoolean(body.completed)&& body.completed){
+        body.completedAt = new Date().getTime();
+    }
+    Todo.findByIdAndUpdate(id, {$set:body}, {new: true}).then(function(todo){
+        if(!todo){
+            return res.status(404).send();
+        }
+        res.status(200).send({todo});
+    }).catch(function(e){
+        res.status(400).send();
+    });
+});
+
+app.get("/todos", function(req, res){
+    Todo.find({}).then((todos)=>{
+        res.send({
+            todos: todos
+        });
+    }, (e)=>{
+        res.status(400).send(e);
+    });
+});
+
+//GET /todos/{id}
+
+app.get("/todos/:id", function(req, res){
+    
+    var id = req.params.id;
+    if(!ObjectID.isValid(id)){
+        return res.status(404).send();
+    }
+    // res.send(req.params.id);
+    Todo.findById(id)
+        .then(function(todo){
+            if(!todo){
+                return res.status(404).send();
+            }
+            res.send({todo});
+        }, function(e){
+            res.status(400).send();
+        });
+});
+
+
+
+app.listen(port, function(){
+    console.log("Server Connected to " + port);
+});
+
+module.exports = {app};
