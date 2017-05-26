@@ -2,6 +2,7 @@ var {mongoose} = require("../db/mongoose");
 var valdiator = require("validator");
 var jwt = require("jsonwebtoken");
 var _ = require("lodash");
+var bcrypt = require("bcrypt");
 
 var userSchema = new mongoose.Schema({
     email: {
@@ -32,6 +33,21 @@ var userSchema = new mongoose.Schema({
         }
     }]
 });
+//Mongoose Middleware 
+userSchema.pre("save", function(next){
+    var user = this;
+    //Check if password is added/updated
+    if(user.isModified("password")){
+        bcrypt.genSalt(10, function(err, salt){
+            bcrypt.hash(user.password, salt, function(err, hash){
+                user.password = hash;
+                next();
+            });
+        }); 
+    }else{
+        next();
+    }
+});
 
 //Instance methods
 
@@ -60,6 +76,7 @@ userSchema.methods.toJSON = function(){
 }
 
 userSchema.methods.generateAuthToken = function(){
+    //in the current user model whereby all except tokens are saved
     var user = this;
     var access  = "auth";
     var token = jwt.sign({_id: user._id.toHexString(), access}, "abc123");
@@ -68,7 +85,9 @@ userSchema.methods.generateAuthToken = function(){
         access, 
         token
     });
+    //saves to db 
     return user.save().then(function(){
+        //return token to pass to header as x-auth
         return token;
     });
 };
