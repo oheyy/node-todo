@@ -4,11 +4,13 @@ var express = require("express");
 var bodyParser = require("body-parser");
 var methodOverride = require("method-override");
 var _ = require("lodash");
+
+
 //Property of mongodb.ObjectID therefore ObjectID has to be the same  
 var {ObjectID} = require("mongodb");
 var {mongoose} = require("./db/mongoose");
 var {Todo} = require("./Models/todo");
-var {user} = require("./Models/user");
+var {User} = require("./Models/user");
 
 
 var app = express();
@@ -98,7 +100,18 @@ app.get("/todos/:id", function(req, res){
         });
 });
 
-
+//POST users
+app.post("/users", function(req, res){
+    var body = _.pick(req.body, ["email", "password"]);
+    var user = new User(body);
+    user.save().then(()=>{
+        return user.generateAuthToken();
+    }).then(function(token){
+        res.header("x-auth", token).send(user);
+    }).catch(function(e){
+        res.status(400).send();
+    });
+});
 
 app.listen(port, function(){
     console.log("Server Connected to " + port);
