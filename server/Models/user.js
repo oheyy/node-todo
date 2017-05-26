@@ -34,7 +34,24 @@ var userSchema = new mongoose.Schema({
 });
 
 //Instance methods
-//Returns only _id and email in http post
+
+//Find token 
+userSchema.statics.findByToken = function(token){
+    var User = this;
+    var decoded;
+    try{
+        decoded = jwt.verify(token, "abc123");
+    }catch(e){
+        return Promise.reject();
+    }
+
+    return User.findOne({
+        "_id": decoded._id,
+        "tokens.token": token, 
+        "tokens.access": "auth"
+    });
+}
+//Automatically called Returns only _id and email in http post
 userSchema.methods.toJSON = function(){
     var user = this;
     var userObject = user.toObject();
@@ -45,7 +62,7 @@ userSchema.methods.toJSON = function(){
 userSchema.methods.generateAuthToken = function(){
     var user = this;
     var access  = "auth";
-    var token = jwt.sign({_id: user._id.toHexString(), access}, "abc123").toString();
+    var token = jwt.sign({_id: user._id.toHexString(), access}, "abc123");
 
     user.tokens.push({
         access, 
@@ -53,7 +70,7 @@ userSchema.methods.generateAuthToken = function(){
     });
     return user.save().then(function(){
         return token;
-    })
+    });
 };
 
 

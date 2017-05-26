@@ -4,7 +4,7 @@ var express = require("express");
 var bodyParser = require("body-parser");
 var methodOverride = require("method-override");
 var _ = require("lodash");
-
+var {authenticate} = require("./middleware/authenticate");
 
 //Property of mongodb.ObjectID therefore ObjectID has to be the same  
 var {ObjectID} = require("mongodb");
@@ -113,6 +113,11 @@ app.post("/users", function(req, res){
     });
 });
 
+
+
+app.get("/users/me", authenticate, function(req, res){
+    res.send(req.user);
+});
 app.listen(port, function(){
     console.log("Server Connected to " + port);
 });
