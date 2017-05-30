@@ -22,6 +22,9 @@ app.use(bodyParser.json());
 app.use(methodOverride("_method"));
 
 // app.get("/")
+app.get("/", function(req, res){
+    res.send("Todo Home Page");
+})
 app.post("/todos", function(req, res){
     var todo = new Todo ({
         text: req.body.text
