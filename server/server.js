@@ -113,7 +113,7 @@ app.post("/users", function(req, res){
     user.save().then(()=>{
         return user.generateAuthToken();
     }).then(function(token){
-            res.header("x-auth", token).send(user);
+            res.header("x-auth", token).status(200).send(user);
     }).catch(function(e){
             res.status(400).send();
     });
@@ -125,10 +125,9 @@ app.get("/users/me", authenticate, function(req, res){
     res.send(req.user);
     bcrypt.compare("password!", req.user.password).then(function(res){
         if(!res){
-            console.log("nothing");
+            console.log("sdsds");
             return res.status(404).send();
         }
-        // console.log("trerererererere");
         res.status(200).send(req.user);
     }).catch(function(e){
         res.status(400).send();

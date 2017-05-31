@@ -4,23 +4,11 @@ var {ObjectId} = require("mongodb");
 
 var {app} = require("./../server");
 var {Todo} = require("./../Models/todo");
+var {User} = require("./../Models/user");
+var {todos, populateTodos, users, populateUsers} = require("./../db/seed/seed");
 
-const todos = [{
-        _id: new ObjectId(),
-        text: "First test todo"
-    },{
-        _id: new ObjectId(),
-        text: "Second test todo"
-    }
-];
-
-beforeEach((done)=>{
-    Todo.remove({}).then(function(){
-        return Todo.insertMany(todos);
-    }).then(function(){
-        done();
-    });
-});
+beforeEach(populateUsers);
+beforeEach(populateTodos);
 //Mocha
 describe("POST /todos", function(){
     it("should create a new todo", function(done){
@@ -184,9 +172,37 @@ describe("PATCH /todos/:id", function(){
         .expect(function(res){
             expect(res.body.todo.text).toBe(text)
             expect(res.body.todo.completed).toBe(false)
-            expect(res.body.todo.completedAt).toNotExist()
+            expect(res.body.todo.completedAt).toBe(333)
         })
         .end(done);
     });
 
+});
+
+describe("/POST /users", function(){
+    it("Should create a new user", (done)=>{
+        request(app)
+            .post("/users")
+            .send({
+                email: "examplesserver@example.com",
+                password: "password!"
+            })
+            .expect(200)
+            .expect((res)=>{
+                expect(res.body.email).toBe("examplesserver@example.com")
+            })
+            .end((err, res)=>{
+                if(err){
+                    return done(err);
+                }
+                User.find({email:"examplesserver@example.com"}).then((users)=>{
+                    expect(users[0].email).toBe("examplesserver@example.com");
+                    expect(users.length).toBe(1);
+                    expect(users[0].email).toBeA("string");
+                    done();
+                }).catch((e)=>{
+                    done(e);
+                });
+            })
+    });
 });
