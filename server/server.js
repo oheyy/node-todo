@@ -123,18 +123,7 @@ app.post("/users", function(req, res){
 
 
 app.get("/users/me", authenticate, function(req, res){
-    //req.user is customized using the methods in user class
     res.send(req.user);
-    // bcrypt.compare("password!", req.user.password).then(function(res){
-    //     if(!res){
-    //         console.log("sdsds");
-    //         return res.status(404).send();
-    //     }
-    //     res.status(200).send(req.user);
-    // }).catch(function(e){
-    //     res.status(400).send();
-    // });
-    
 });
 //POST /users/login
 app.post('/users/login', (req, res) => {
@@ -147,6 +136,15 @@ app.post('/users/login', (req, res) => {
   }).catch((e) => {
     res.status(400).send();
   });
+});
+
+//DELETE users/me/token
+app.delete("/users/me/token", authenticate, (req, res)=>{
+    User.removeToken(req.token).then(()=>{
+        res.status(200).send();
+    }).catch((e) =>{
+        res.status(400).send();
+    });
 });
 
 app.listen(port, function(){
