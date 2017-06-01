@@ -8,6 +8,7 @@ var bcrypt = require("bcrypt");
 
 //Property of mongodb.ObjectID therefore ObjectID has to be the same  
 var {ObjectID} = require("mongodb");
+//To connect to a db
 var {mongoose} = require("./db/mongoose");
 var {Todo} = require("./Models/todo");
 var {User} = require("./Models/user");
@@ -122,18 +123,32 @@ app.post("/users", function(req, res){
 
 
 app.get("/users/me", authenticate, function(req, res){
+    //req.user is customized using the methods in user class
     res.send(req.user);
-    bcrypt.compare("password!", req.user.password).then(function(res){
-        if(!res){
-            console.log("sdsds");
-            return res.status(404).send();
-        }
-        res.status(200).send(req.user);
-    }).catch(function(e){
-        res.status(400).send();
-    });
+    // bcrypt.compare("password!", req.user.password).then(function(res){
+    //     if(!res){
+    //         console.log("sdsds");
+    //         return res.status(404).send();
+    //     }
+    //     res.status(200).send(req.user);
+    // }).catch(function(e){
+    //     res.status(400).send();
+    // });
     
 });
+//POST /users/login
+app.post('/users/login', (req, res) => {
+  var body = _.pick(req.body, ['email', 'password']);
+
+  User.findByCredentials(body.email, body.password).then((user) => {
+    return user.generateAuthToken().then((token) => {
+      res.header('x-auth', token).send(user);
+    });
+  }).catch((e) => {
+    res.status(400).send();
+  });
+});
+
 app.listen(port, function(){
     console.log("Server Connected to " + port);
 });
