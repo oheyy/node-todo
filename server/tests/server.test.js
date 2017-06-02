@@ -18,6 +18,7 @@ describe("POST /todos", function(){
         request(app)
             //goes to /todos
             .post("/todos")
+            .set("x-auth", users[0].tokens[0].token)
             //Sends a text file as json
             .send({text})
             //expect statuscode to be 200
@@ -46,6 +47,7 @@ describe("POST /todos", function(){
     it("should not create todo with invalid body data", (done)=>{
         request(app)
             .post("/todos")
+            .set("x-auth", users[0].tokens[0].token)
             .send({})
             .expect(400)
             .end(function(err, res){
@@ -67,9 +69,10 @@ describe("GET /todos", function(){
     it("Should return a list of todos", (done)=>{
         request(app)
             .get("/todos")
+            .set("x-auth", users[0].tokens[0].token)
             .expect(200)
             .expect(function(res){
-                expect(res.body.todos.length).toBe(2);
+                expect(res.body.todos.length).toBe(1);
             })
             .end(done);
     });
@@ -79,7 +82,8 @@ describe("GET /todos", function(){
 describe("GET /todos/id", function(){
     it("Should return a todo with corresponding id", function(done){
         request(app)
-            .get("/todos/" + todos[0]._id)
+            .get("/todos/" + todos[0]._id.toHexString())
+            .set("x-auth", users[0].tokens[0].token)
             .expect(200)
             .expect(function(res){
                 //expect(res.body.todo.length).toBe(1);
@@ -87,11 +91,19 @@ describe("GET /todos/id", function(){
             })
             .end(done);
     });
+        it("Should not return a todo with corresponding id", function(done){
+        request(app)
+            .get("/todos/" + todos[1]._id.toHexString())
+            .set("x-auth", users[0].tokens[0].token)
+            .expect(404)
+            .end(done);
+    });
     //id is the same format as the _id but none were found in the db
     it("Should return 404 if todo not found", function(done){
         var id = new ObjectId().toHexString();
         request(app)
         .get("/todos/" + id)
+        .set("x-auth", users[0].tokens[0].token)
         .expect(404)
         .end(done);
     });
@@ -100,6 +112,7 @@ describe("GET /todos/id", function(){
         var id = 123;
         request(app)
         .get("/todos/" + id)
+        .set("x-auth", users[0].tokens[0].token)
         .expect(404)
         .end(done);
     });
@@ -109,6 +122,7 @@ describe("DELETE /todos/id", function() {
     it("Should delete the selected todo", function(done){
         request(app)
             .delete("/todos/" +  todos[0]._id)
+            .set("x-auth", users[0].tokens[0].token)
             .expect(200)
             .expect(function(res){
                 expect(res.body.deletedTodo.text).toBe(todos[0].text);
@@ -130,6 +144,7 @@ describe("DELETE /todos/id", function() {
         var id = new ObjectId().toHexString();
         request(app)
             .delete("/todos/" + id)
+            .set("x-auth", users[0].tokens[0].token)
             .expect(404)
             .end(done);
     });
@@ -138,6 +153,7 @@ describe("DELETE /todos/id", function() {
         var id = 12345;
         request(app)
             .delete("/todos/" + id)
+            .set("x-auth", users[0].tokens[0].token)
             .expect(404)
             .end(done);
     });
@@ -148,6 +164,7 @@ describe("PATCH /todos/:id", function(){
         var text = "test patch todos";
         request(app)
             .patch("/todos/" + todos[0]._id)
+            .set("x-auth", users[0].tokens[0].token)
             .send({
                 completed: true,
                 text: text
@@ -164,6 +181,7 @@ describe("PATCH /todos/:id", function(){
     var text = "test patch todos/id";
     request(app)
         .patch("/todos/" + todos[1]._id)
+        .set("x-auth", users[1].tokens[0].token)
         .send({
             completed: false,
             text: text

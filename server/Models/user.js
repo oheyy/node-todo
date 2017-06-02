@@ -48,7 +48,15 @@ userSchema.pre("save", function(next){
         next();
     }
 });
+userSchema.methods.removeToken = function(token){
+    var user = this;
+    return user.update({
+        $pull:{
+            "tokens":{token}
+        }
+    });
 
+}
 //Instance methods
 
 //Find token 
@@ -86,15 +94,7 @@ userSchema.statics.findByCredentials = function(email, password){
     });
 }
 
-userSchema.statics.removeToken = function(token){
-    var user = this;
-    return user.update({
-        "$pull":{
-            "tokens":{token}
-        }
-    })
 
-}
 //Automatically called Returns only _id and email in http post
 userSchema.methods.toJSON = function(){
     var user = this;

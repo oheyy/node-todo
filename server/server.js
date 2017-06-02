@@ -25,10 +25,12 @@ app.use(methodOverride("_method"));
 // app.get("/")
 app.get("/", function(req, res){
     res.send("Todo Home Page");
-})
-app.post("/todos", function(req, res){
+});
+
+app.post("/todos", authenticate, function(req, res){
     var todo = new Todo ({
-        text: req.body.text
+        text: req.body.text,
+        _creator: req.user._id
     });
 
     todo.save().then((docs)=>{
@@ -39,12 +41,15 @@ app.post("/todos", function(req, res){
 });
 
 // DELETE /todos/id?_method=DELETE
-app.delete("/todos/:id", function(req, res){
+app.delete("/todos/:id", authenticate, function(req, res){
     var id = req.params.id;
     if(!ObjectID.isValid(id)){
         return res.status(404).send("Invalid id!!");
     }
-    Todo.findByIdAndRemove(id).then(function(deletedTodo){
+    Todo.findOneAndRemove({
+        _id: id, 
+        _creator: req.user._id
+    }).then(function(deletedTodo){
         if(deletedTodo == null){
             return res.status(404).send();
         }
@@ -55,7 +60,7 @@ app.delete("/todos/:id", function(req, res){
 });
 
 //Patch /todos/id patch vs put (Put requires the entity to be complete but patch does not)
-app.patch("/todos/:id", function(req, res){
+app.patch("/todos/:id", authenticate, function(req, res){
     var id = req.params.id;
     var body = _.pick(req.body, ['text', 'completed']);
     if(!ObjectID.isValid(id)){
@@ -65,7 +70,10 @@ app.patch("/todos/:id", function(req, res){
     if(_.isBoolean(body.completed)&& body.completed){
         body.completedAt = new Date().getTime();
     }
-    Todo.findByIdAndUpdate(id, {$set:body}, {new: true}).then(function(todo){
+    Todo.findOneAndUpdate({
+        _id:id, 
+        _creator: req.user._id
+    }, {$set:body}, {new: true}).then(function(todo){
         if(!todo){
             return res.status(404).send();
         }
@@ -75,8 +83,10 @@ app.patch("/todos/:id", function(req, res){
     });
 });
 
-app.get("/todos", function(req, res){
-    Todo.find({}).then((todos)=>{
+app.get("/todos", authenticate, function(req, res){
+    Todo.find({
+        _creator: req.user._id
+    }).then((todos)=>{
         res.send({
             todos: todos
         });
@@ -87,14 +97,17 @@ app.get("/todos", function(req, res){
 
 //GET /todos/{id}
 
-app.get("/todos/:id", function(req, res){
+app.get("/todos/:id", authenticate, function(req, res){
     
     var id = req.params.id;
     if(!ObjectID.isValid(id)){
         return res.status(404).send();
     }
     // res.send(req.params.id);
-    Todo.findById(id)
+    Todo.findOne({
+        _id:id,
+        _creator: req.user._id
+    })
         .then(function(todo){
             if(!todo){
                 return res.status(404).send();
@@ -140,11 +153,12 @@ app.post('/users/login', (req, res) => {
 
 //DELETE users/me/token
 app.delete("/users/me/token", authenticate, (req, res)=>{
-    User.removeToken(req.token).then(()=>{
+    req.user.removeToken(req.token).then(()=>{
         res.status(200).send();
-    }).catch((e) =>{
+    }, ()=>{
         res.status(400).send();
     });
+
 });
 
 app.listen(port, function(){
